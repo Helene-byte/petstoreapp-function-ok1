@@ -12,11 +12,21 @@ public class BlobStorageService {
         this.blobServiceClient = blobServiceClient;
     }
 
-    public void uploadToBlobStorage(String containerName, String blobName, String data) {
+    public boolean updateBlobIfExist(String containerName, String blobName, String data) {
         BlobContainerClient containerClient = blobServiceClient.getBlobContainerClient(containerName);
         containerClient.createIfNotExists();
 
         BlobClient blobClient = containerClient.getBlobClient(blobName);
-        blobClient.upload(BinaryData.fromString(data));
+
+        // Check if the blob already exists
+        if (blobClient.exists()) {
+            // If it exists, update the blob with new data
+            blobClient.upload(BinaryData.fromString(data), true); // Overwrite the existing blob
+            return true; // Indicate that the update was successful
+        } else {
+            // Blob doesn't exist, hence create it
+            blobClient.upload(BinaryData.fromString(data));
+            return false; // Indicate that a new blob was created
+        }
     }
 }
